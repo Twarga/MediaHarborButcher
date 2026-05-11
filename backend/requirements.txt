@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+playwright
+playwright-stealth
+aiohttp
+sqlalchemy
+python-multipart
+ffmpeg-python

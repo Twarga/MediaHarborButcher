@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+frontend/node_modules/
+frontend/dist/
+mediaharbor.db
+*.db
+downloads/
+.env
+.DS_Store

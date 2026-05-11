@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediaHarbor — Paste any link. Harvest everything.</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --bg2: #1a1a1a;
+      --bg3: #242424;
+      --purple: #7c3aed;
+      --purple-light: #a78bfa;
+      --text: #f0f0f0;
+      --muted: #888;
+      --border: #2a2a2a;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+    }
+
+    a { color: var(--purple-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* NAV */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-size: 1.2rem; font-weight: 700; color: var(--purple-light); }
+    nav a { color: var(--muted); font-size: 0.9rem; margin-left: 1.5rem; }
+    nav a:hover { color: var(--text); text-decoration: none; }
+
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 4rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+    .hero h1 span { color: var(--purple-light); }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+    .btn-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.75rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; text-decoration: none; }
+    .btn-primary { background: var(--purple); color: #fff; }
+    .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+
+    /* MOCKUP */
+    .mockup {
+      max-width: 860px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+    .mockup-window {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .mockup-bar {
+      background: var(--bg3);
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+    .mockup-url {
+      flex: 1;
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-left: 0.5rem;
+    }
+    .mockup-body { padding: 1.5rem; }
+    .mock-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      width: 100%;
+      margin-bottom: 0.75rem;
+    }
+    .mock-btns { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; }
+    .mock-btn {
+      padding: 0.5rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .mock-btn-p { background: var(--purple); color: #fff; }
+    .mock-btn-g { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+    .mock-log {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+    .mock-log .ok { color: #4ade80; }
+    .mock-log .info { color: #60a5fa; }
+    .mock-count { margin-top: 0.75rem; font-size: 0.85rem; }
+    .mock-count span { color: var(--purple-light); font-weight: 700; }
+
+    /* FEATURES */
+    .features {
+      max-width: 960px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+    }
+    .features h2 { text-align: center; font-size: 1.75rem; margin-bottom: 2.5rem; }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+    .feature-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+    .feature-icon { font-size: 1.75rem; margin-bottom: 0.75rem; }
+    .feature-card h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+    .feature-card p { font-size: 0.875rem; color: var(--muted); }
+
+    /* HOW IT WORKS */
+    .how {
+      max-width: 700px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+      text-align: center;
+    }
+    .how h2 { font-size: 1.75rem; margin-bottom: 2.5rem; }
+    .steps { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .step {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem 1.25rem;
+      flex: 1;
+      min-width: 160px;
+      max-width: 200px;
+    }
+    .step-num {
+      width: 36px; height: 36px;
+      background: var(--purple);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1rem;
+      margin: 0 auto 0.75rem;
+    }
+    .step h3 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .step p { font-size: 0.8rem; color: var(--muted); }
+
+    /* INSTALL */
+    .install {
+      max-width: 700px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+    }
+    .install h2 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .install p { color: var(--muted); margin-bottom: 1.5rem; }
+    .code-block {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      font-family: monospace;
+      font-size: 0.875rem;
+      line-height: 2;
+      color: #d4d4d4;
+    }
+    .code-block .cmd { color: #4ade80; }
+    .code-block .comment { color: var(--muted); }
+    .req-row {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .req-badge {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 4rem;
+    }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 600px) {
+      nav a { display: none; }
+      .hero { padding: 3rem 1.5rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">MediaHarbor</span>
+  <div>
+    <a href="https://github.com/Twarga/MediaHarborButcher">GitHub</a>
+    <a href="https://github.com/Twarga/MediaHarborButcher/releases">Releases</a>
+    <a href="https://github.com/Twarga/MediaHarborButcher/blob/main/README.md">Docs</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <h1>Paste any link.<br><span>Harvest everything.</span></h1>
+  <p>A local web app that extracts and downloads every image and video from any webpage — including JavaScript-heavy sites, infinite scroll galleries, and lazy-loaded content.</p>
+  <div class="btn-row">
+    <a class="btn btn-primary" href="https://github.com/Twarga/MediaHarborButcher/releases">Download v2.0</a>
+    <a class="btn btn-secondary" href="https://github.com/Twarga/MediaHarborButcher">View on GitHub</a>
+  </div>
+</section>
+
+<div class="mockup">
+  <div class="mockup-window">
+    <div class="mockup-bar">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+      <div class="mockup-url">localhost:8000</div>
+    </div>
+    <div class="mockup-body">
+      <div class="mock-input">https://unsplash.com/collections/...</div>
+      <div class="mock-btns">
+        <div class="mock-btn mock-btn-g">Auto Download</div>
+        <div class="mock-btn mock-btn-p">Select &amp; Download</div>
+        <div class="mock-btn mock-btn-p" style="margin-left:auto">Harvest</div>
+      </div>
+      <div class="mock-log">
+        <div class="info">🔵 Launching browser...</div>
+        <div class="info">🔵 Navigating to unsplash.com...</div>
+        <div class="info">🔵 Scrolling page (6/15)...</div>
+        <div class="ok">✅ Found image: photo-1920x1080.jpg</div>
+        <div class="ok">✅ Found image: banner-wide.webp</div>
+        <div class="ok">✅ Found video: intro-reel.mp4</div>
+        <div class="ok">✅ Found image: portrait-800x600.jpg</div>
+      </div>
+      <div class="mock-count">Images: <span>47</span> &nbsp;|&nbsp; Videos: <span>3</span></div>
+    </div>
+  </div>
+</div>
+
+<section class="features">
+  <h2>Everything you need</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🌐</div>
+      <h3>Any Website</h3>
+      <p>Works on JavaScript-heavy sites, infinite scroll, lazy loading, and single-page apps.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎬</div>
+      <h3>Images &amp; Videos</h3>
+      <p>JPG, PNG, WebP, GIF, MP4, WebM, and HLS/DASH streams converted to MP4 via ffmpeg.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">✅</div>
+      <h3>Select &amp; Download</h3>
+      <p>Preview every found file in a grid. Check what you want, uncheck what you don't.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>Real-time Progress</h3>
+      <p>Live log as the scan runs. Download progress bar with speed and ETA.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <h3>Stealth Mode</h3>
+      <p>Playwright stealth bypasses bot detection on sites that block automated browsers.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚙️</div>
+      <h3>Full Control</h3>
+      <p>Set output folder, subfolders, min image size, formats, concurrency, scroll depth.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗂️</div>
+      <h3>Organized Output</h3>
+      <p>Auto-creates per-site folders. Separate images/ and videos/ subfolders. MD5 dedup.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <h3>Harvest History</h3>
+      <p>Every harvest saved to local SQLite. One-click to open the output folder.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3>100% Local</h3>
+      <p>No accounts, no cloud, no telemetry. Everything runs on your machine.</p>
+    </div>
+  </div>
+</section>
+
+<section class="how">
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Paste URL</h3>
+      <p>Drop any webpage URL into the input field.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Scan</h3>
+      <p>Real browser loads the page, scrolls, and finds all media.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Select</h3>
+      <p>Preview the grid. Pick exactly what you want to keep.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Download</h3>
+      <p>Files saved to your configured folder. Done.</p>
+    </div>
+  </div>
+</section>
+
+<section class="install">
+  <h2>Get started</h2>
+  <p>Runs locally. No Docker, no cloud, no accounts.</p>
+  <div class="code-block">
+    <div><span class="comment"># Clone the repo</span></div>
+    <div><span class="cmd">git clone</span> https://github.com/Twarga/MediaHarborButcher.git</div>
+    <div><span class="cmd">cd</span> MediaHarborButcher</div>
+    <div>&nbsp;</div>
+    <div><span class="comment"># Install everything</span></div>
+    <div><span class="cmd">chmod +x install.sh &amp;&amp; ./install.sh</span></div>
+    <div>&nbsp;</div>
+    <div><span class="comment"># Run</span></div>
+    <div><span class="cmd">./run.sh</span></div>
+    <div>&nbsp;</div>
+    <div><span class="comment"># Open in browser</span></div>
+    <div>http://localhost:8000</div>
+  </div>
+  <div class="req-row">
+    <span class="req-badge">Python 3.11+</span>
+    <span class="req-badge">Node.js 18+</span>
+    <span class="req-badge">ffmpeg (optional)</span>
+    <span class="req-badge">Linux / macOS / Windows</span>
+  </div>
+</section>
+
+<footer>
+  <p>
+    <a href="https://github.com/Twarga/MediaHarborButcher">GitHub</a> &nbsp;·&nbsp;
+    <a href="https://github.com/Twarga/MediaHarborButcher/blob/main/LICENSE">MIT License</a> &nbsp;·&nbsp;
+    For personal use only. Respect copyright and site terms of service.
+  </p>
+</footer>
+
+</body>
+</html>
