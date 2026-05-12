@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { IconImage, IconVideo, IconCheck, IconAlert } from "../icons";
 
 export default function ScanProgress({ logs, counts, done }) {
   const ref = useRef(null);
@@ -7,66 +8,78 @@ export default function ScanProgress({ logs, counts, done }) {
   }, [logs]);
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 pb-4">
-      {/* Counters row */}
-      <div className="flex gap-3 mb-3">
-        <Counter label="Images" value={counts.images} color="purple" active={!done} />
-        <Counter label="Videos" value={counts.videos} color="pink" active={!done} />
-        <div className="ml-auto flex items-center gap-2 text-sm">
+    <section className="max-w-3xl mx-auto mt-8 anim-fade-up">
+      {/* Stat row */}
+      <div className="grid grid-cols-3 gap-3 mb-3">
+        <StatCard icon={IconImage} label="Images" value={counts.images} color="amber" active={!done} />
+        <StatCard icon={IconVideo} label="Videos" value={counts.videos} color="coral" active={!done} />
+        <div className="card p-4 flex flex-col justify-center items-start">
+          <div className="text-xs text-paper-500 uppercase tracking-wide mb-1">Status</div>
           {done ? (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-950/50 border border-green-800 text-green-400 text-xs font-medium">
-              <span>✓</span> Scan complete
-            </span>
+            <div className="flex items-center gap-2 text-teal-400 text-sm font-medium">
+              <IconCheck size={14} strokeWidth={2.5} /> Complete
+            </div>
           ) : (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-950/50 border border-purple-800 text-purple-300 text-xs font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-              Scanning...
-            </span>
+            <div className="flex items-center gap-2 text-amber-300 text-sm font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 scan-dot" />
+              Scanning…
+            </div>
           )}
         </div>
       </div>
 
       {/* Log panel */}
-      <div
-        ref={ref}
-        className="bg-gray-900 border border-gray-800 rounded-xl p-4 h-52 overflow-y-auto font-mono text-sm space-y-1"
-      >
-        {logs.length === 0 && !done && (
-          <div className="text-gray-600 italic">Waiting for scanner...</div>
-        )}
-        {logs.map((log, i) => (
-          <div
-            key={i}
-            className={
-              log.startsWith("✅")
-                ? "text-green-400"
-                : log.startsWith("🔴")
-                ? "text-red-400"
-                : "text-blue-400"
-            }
-          >
-            {log}
-          </div>
-        ))}
-        {!done && <div className="text-purple-400 animate-pulse">▌</div>}
+      <div className="card overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-ink-500">
+          <span className="text-xs font-mono text-paper-500 uppercase tracking-wider">scanner.log</span>
+          <span className="text-xs font-mono text-paper-600">{logs.length} events</span>
+        </div>
+        <div
+          ref={ref}
+          className="h-56 overflow-y-auto p-4 font-mono text-[13px] leading-relaxed space-y-0.5"
+        >
+          {logs.length === 0 && !done && (
+            <div className="text-paper-600 italic">waiting for events…</div>
+          )}
+          {logs.map((log, i) => (
+            <LogLine key={i} log={log} />
+          ))}
+          {!done && <div className="text-amber-400 animate-pulse">▊</div>}
+        </div>
       </div>
+    </section>
+  );
+}
+
+function StatCard({ icon: Ic, label, value, color, active }) {
+  const accent = color === "amber" ? "text-amber-300" : "text-coral-400";
+  return (
+    <div className={`card p-4 relative overflow-hidden ${active ? "card-hover" : ""}`}>
+      <div className={`absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-40
+        ${color === "amber" ? "bg-amber-400/20" : "bg-coral-500/20"}`} />
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs text-paper-500 uppercase tracking-wide">{label}</span>
+        <Ic size={14} className={`${accent} opacity-70`} />
+      </div>
+      <div className={`font-display text-4xl leading-none ${accent}`}>{value}</div>
     </div>
   );
 }
 
-function Counter({ label, value, color, active }) {
-  const colorClass = {
-    purple: "from-purple-600/30 to-purple-900/30 border-purple-700/40",
-    pink: "from-pink-600/30 to-pink-900/30 border-pink-700/40",
-  }[color];
-  const textClass = { purple: "text-purple-300", pink: "text-pink-300" }[color];
+function LogLine({ log }) {
+  const { kind, msg } = log;
+  const colors = {
+    ok:   { icon: IconCheck, color: "text-teal-400" },
+    info: { icon: null,      color: "text-paper-400" },
+    err:  { icon: IconAlert, color: "text-coral-400" },
+  }[kind] || { icon: null, color: "text-paper-400" };
 
   return (
-    <div
-      className={`flex items-baseline gap-2 px-4 py-2 rounded-lg bg-gradient-to-br border ${colorClass} ${active ? "animate-[pulse-purple_2s_ease-in-out_infinite]" : ""}`}
-    >
-      <span className={`text-2xl font-bold ${textClass}`}>{value}</span>
-      <span className="text-xs text-gray-400">{label}</span>
+    <div className={`flex items-baseline gap-2 ${colors.color}`}>
+      <span className="text-paper-600 text-xs w-4 shrink-0">
+        {colors.icon ? <colors.icon size={11} strokeWidth={2.5} /> : "·"}
+      </span>
+      <span className="break-all">{msg}</span>
     </div>
   );
 }

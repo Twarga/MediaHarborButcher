@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
+import { IconLink, IconSparkles, IconArrowRight } from "../icons";
 
 const EXAMPLES = [
-  { label: "Unsplash", url: "https://unsplash.com/" },
-  { label: "Reddit", url: "https://www.reddit.com/r/EarthPorn/" },
-  { label: "Imgur", url: "https://imgur.com/gallery/" },
-  { label: "Pexels", url: "https://www.pexels.com/videos/" },
+  { label: "Unsplash",  url: "https://unsplash.com/" },
+  { label: "Reddit",    url: "https://www.reddit.com/r/EarthPorn/" },
+  { label: "Vimeo",     url: "https://vimeo.com/" },
+  { label: "Pexels",    url: "https://www.pexels.com/videos/" },
 ];
 
 export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings }) {
@@ -17,15 +18,7 @@ export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings })
     if (url) onHarvest(url, mode);
   }
 
-  function useExample(url) {
-    if (inputRef.current) {
-      inputRef.current.value = url;
-      inputRef.current.focus();
-    }
-  }
-
   function onKeyDown(e) {
-    // Ctrl/Cmd + Enter → submit
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
       const url = e.target.value.trim();
@@ -33,87 +26,98 @@ export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings })
     }
   }
 
+  function useExample(url) {
+    if (inputRef.current) {
+      inputRef.current.value = url;
+      inputRef.current.focus();
+    }
+  }
+
   return (
-    <form onSubmit={submit} className="w-full max-w-3xl mx-auto px-4 pt-10 pb-4">
-      <div className="relative">
-        <input
-          ref={inputRef}
-          name="url"
-          type="url"
-          required
-          autoFocus
-          disabled={scanning}
-          onKeyDown={onKeyDown}
-          placeholder="Paste any webpage URL..."
-          className="w-full pl-12 pr-4 py-4 text-lg bg-gray-900 border border-gray-700 rounded-xl focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-white placeholder-gray-500 disabled:opacity-50 transition-all"
-        />
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none select-none">
-          🔗
-        </span>
-        <kbd className="hidden sm:inline-flex absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500 bg-gray-800 border border-gray-700 rounded px-1.5 py-0.5 pointer-events-none">
-          ⌘ ↵
-        </kbd>
-      </div>
-
-      {/* Example chips */}
-      <div className="flex flex-wrap items-center gap-2 mt-3">
-        <span className="text-xs text-gray-600">Try:</span>
-        {EXAMPLES.map((ex) => (
-          <button
-            key={ex.label}
-            type="button"
-            onClick={() => useExample(ex.url)}
+    <form onSubmit={submit} className="w-full max-w-3xl mx-auto anim-fade-up">
+      <div className="card p-1.5 shadow-2xl shadow-amber-500/5">
+        <div className="flex items-center gap-2">
+          <span className="pl-4 pr-1 text-paper-400"><IconLink size={18} /></span>
+          <input
+            ref={inputRef}
+            name="url"
+            type="url"
+            required
+            autoFocus
             disabled={scanning}
-            className="px-2.5 py-1 text-xs rounded-full bg-gray-800 border border-gray-700 text-gray-400 hover:text-white hover:border-purple-500 transition-colors disabled:opacity-30"
+            onKeyDown={onKeyDown}
+            placeholder="https://…"
+            className="flex-1 bg-transparent py-3.5 text-lg text-paper-100 placeholder-paper-500 focus:outline-none disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            disabled={scanning}
+            className="flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 disabled:bg-ink-500 disabled:text-paper-500 disabled:cursor-not-allowed text-ink-900 font-semibold rounded-lg transition-colors"
           >
-            {ex.label}
+            {scanning ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-ink-900/40 border-t-ink-900 rounded-full animate-spin" />
+                Scanning
+              </>
+            ) : (
+              <>
+                <IconSparkles size={16} strokeWidth={2.25} />
+                Harvest
+              </>
+            )}
           </button>
-        ))}
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 mt-4">
-        <div className="flex rounded-lg overflow-hidden border border-gray-700 text-sm font-medium">
+      {/* Mode toggle + examples + shortcuts */}
+      <div className="flex flex-wrap items-center gap-3 mt-4">
+        <div className="inline-flex rounded-lg overflow-hidden border border-ink-400 bg-ink-700 text-sm p-0.5">
           {[
-            { value: "auto", label: "Auto Download" },
-            { value: "select", label: "Select & Download" },
+            { value: "auto", label: "Auto" },
+            { value: "select", label: "Select" },
           ].map(({ value, label }) => (
             <button
               key={value}
               type="button"
               onClick={() => setMode(value)}
-              className={`px-4 py-2 transition-colors ${
-                mode === value
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-900 text-gray-400 hover:bg-gray-800"
-              }`}
+              className={`px-4 py-1.5 rounded-md transition-colors font-medium
+                ${mode === value
+                  ? "bg-amber-400 text-ink-900"
+                  : "text-paper-300 hover:text-paper-100"}`}
             >
               {label}
             </button>
           ))}
         </div>
 
-        <button
-          type="submit"
-          disabled={scanning}
-          className="ml-auto px-8 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors shadow-lg shadow-purple-600/20 hover:shadow-purple-600/40"
-        >
-          {scanning ? (
-            <span className="flex items-center gap-2">
-              <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              Scanning...
-            </span>
-          ) : (
-            "Harvest"
-          )}
-        </button>
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="text-xs text-paper-500 font-mono">try</span>
+          {EXAMPLES.map((ex) => (
+            <button
+              key={ex.label}
+              type="button"
+              onClick={() => useExample(ex.url)}
+              disabled={scanning}
+              className="px-2.5 py-1 text-xs rounded-md border border-ink-400 text-paper-400 hover:text-amber-300 hover:border-amber-400/40 transition-colors disabled:opacity-30"
+            >
+              {ex.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {outputDir && (
-        <p className="mt-2 text-xs text-gray-500">
-          Saving to{" "}
-          <button type="button" onClick={onGoSettings} className="text-purple-400 hover:underline">
+        <p className="mt-4 text-xs text-paper-500 flex items-center gap-1.5">
+          <span>Saving to</span>
+          <button
+            type="button"
+            onClick={onGoSettings}
+            className="text-amber-300 hover:text-amber-200 font-mono underline-offset-2 hover:underline inline-flex items-center gap-1"
+          >
             {outputDir}
+            <IconArrowRight size={11} />
           </button>
+          <span className="ml-auto text-paper-600 font-mono text-[10px]">⌘↵</span>
         </p>
       )}
     </form>

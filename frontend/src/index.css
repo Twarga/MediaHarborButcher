@@ -8,34 +8,89 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh;
-  background: #030712;
+html, body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #08090c;
+  color: #f4f0e6;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Ambient grid backdrop for the whole app */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(255, 138, 61, 0.08) 0, transparent 45%),
+    radial-gradient(circle at 85% 90%, rgba(239, 72, 82, 0.05) 0, transparent 45%),
+    radial-gradient(rgba(244, 240, 230, 0.035) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Keyframes */
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(20px); }
+  from { opacity: 0; transform: translateX(16px); }
   to   { opacity: 1; transform: translateX(0); }
 }
-
-@keyframes pulse-purple {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.5); }
-  50%      { box-shadow: 0 0 0 10px rgba(168, 85, 247, 0); }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-.shimmer {
-  background: linear-gradient(90deg, #1f2937 0%, #374151 50%, #1f2937 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+@keyframes scanPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.15); }
 }
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
+  0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
-/* Custom scrollbar for dark theme */
+.anim-fade-up { animation: fadeUp 0.35s ease-out both; }
+.scan-dot     { animation: scanPulse 1.4s ease-in-out infinite; }
+.shimmer-bg {
+  background: linear-gradient(90deg, #13141a 0%, #24262f 50%, #13141a 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #374151; border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+::-webkit-scrollbar-track { background: #08090c; }
+::-webkit-scrollbar-thumb { background: #2f323d; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #40434f; }
+
+/* Text selection */
+::selection { background: rgba(255, 138, 61, 0.3); color: #fff4e6; }
+
+/* Reusable utility: subtle outlined card */
+.card {
+  background: linear-gradient(180deg, #13141a 0%, #0d0e13 100%);
+  border: 1px solid #24262f;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+.card-hover {
+  transition: border-color 0.15s, transform 0.15s;
+}
+.card-hover:hover {
+  border-color: rgba(255, 138, 61, 0.4);
+}
+
+/* Gradient text (for display headlines) */
+.grad-text {
+  background: linear-gradient(135deg, #fff4e6 0%, #ff8a3d 60%, #ef4852 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}

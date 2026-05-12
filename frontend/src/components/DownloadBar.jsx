@@ -1,99 +1,130 @@
 import { useState } from "react";
 import { toast } from "../toast";
+import {
+  IconDownload, IconCheck, IconAlert, IconFolderOpen, IconRefresh, IconArrowRight,
+} from "../icons";
 
 export default function DownloadBar({ selected, onDownload, downloadState, onReset, onOpenFolder, onRetryFailed }) {
-  const { status, done, total, speed, fileLogs, outputDir, failedItems = [], errors = 0, skipped = 0 } = downloadState;
+  const { status, done, total, speed, fileLogs = [], outputDir, failedItems = [], errors = 0, skipped = 0 } = downloadState;
   const pct = total ? Math.round((done / total) * 100) : 0;
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 px-4 py-3 z-50">
-      {status === "idle" && (
-        <div className="flex items-center justify-between max-w-6xl mx-auto">
-          <span className="text-gray-400 text-sm">{selected.size} selected</span>
-          <button
-            onClick={onDownload}
-            disabled={selected.size === 0}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-lg font-semibold text-white transition-colors"
-          >
-            Download Selected ({selected.size})
-          </button>
-        </div>
-      )}
+    <div className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-md bg-ink-900/90 border-t border-ink-500">
+      <div className="max-w-6xl mx-auto px-6 py-4">
 
-      {status === "downloading" && (
-        <div className="max-w-6xl mx-auto space-y-2">
-          <div className="flex justify-between text-sm text-gray-400">
-            <span>Downloading {done}/{total} ({pct}%)</span>
-            <span>{speed} MB/s</span>
-          </div>
-          <div className="w-full bg-gray-700 rounded-full h-2">
-            <div className="bg-purple-600 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
-          </div>
-          <div className="text-xs text-gray-500 font-mono max-h-12 overflow-hidden">
-            {fileLogs.slice(-3).map((l, i) => (
-              <div key={i} className={l.startsWith("❌") ? "text-red-400" : ""}>{l}</div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {status === "done" && (
-        <div className="max-w-6xl mx-auto space-y-2">
-          <div className="flex items-center gap-3">
-            <span className="text-green-400 text-sm">
-              ✅ {done} downloaded
+        {status === "idle" && (
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-paper-400 text-sm font-mono">
+              {selected.size} <span className="text-paper-600">selected</span>
             </span>
-            {skipped > 0 && <span className="text-gray-400 text-sm">• {skipped} skipped (duplicate)</span>}
-            {errors > 0 && (
-              <span className="text-red-400 text-sm">• {errors} failed</span>
-            )}
             <button
-              onClick={() => onOpenFolder(outputDir).catch(err => toast(err.message, "error"))}
-              className="ml-auto px-4 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm"
+              onClick={onDownload}
+              disabled={selected.size === 0}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 disabled:bg-ink-500 disabled:text-paper-500 disabled:cursor-not-allowed text-ink-900 font-semibold rounded-lg transition-colors shadow-glow-amber disabled:shadow-none"
             >
-              Open Folder
-            </button>
-            {failedItems.length > 0 && onRetryFailed && (
-              <button
-                onClick={() => onRetryFailed(failedItems)}
-                className="px-4 py-1.5 bg-orange-600 hover:bg-orange-700 rounded text-sm font-semibold"
-              >
-                Retry Failed ({failedItems.length})
-              </button>
-            )}
-            <button
-              onClick={onReset}
-              className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 rounded text-sm"
-            >
-              New Harvest
+              <IconDownload size={16} strokeWidth={2.25} />
+              Download {selected.size > 0 && `(${selected.size})`}
             </button>
           </div>
+        )}
 
-          {failedItems.length > 0 && (
-            <div className="border border-red-900/40 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setExpanded(e => !e)}
-                className="w-full px-3 py-2 bg-red-950/30 hover:bg-red-950/50 text-xs text-red-300 text-left flex justify-between items-center"
-              >
-                <span>{expanded ? "▼" : "▶"} Show failure details ({failedItems.length})</span>
-                <span className="text-red-500/60">tried with {failedItems[0]?.engine || "http"}</span>
-              </button>
-              {expanded && (
-                <div className="max-h-40 overflow-y-auto bg-gray-950 p-2 space-y-1 font-mono text-[11px]">
-                  {failedItems.map((f, i) => (
-                    <div key={i} className="text-red-400 truncate" title={f.url + " — " + f.error}>
-                      <span className="text-gray-600">[{f.engine} ×{f.attempts}]</span>{" "}
-                      <span className="text-red-300">{f.error}</span>{" "}
-                      <span className="text-gray-500">{f.url.split("/").pop().slice(0, 60)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+        {status === "downloading" && (
+          <div className="space-y-2.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-paper-200 font-medium">
+                Downloading{" "}
+                <span className="font-mono text-paper-500">
+                  {done}/{total}
+                </span>
+              </span>
+              <span className="font-mono text-amber-300">{speed} MB/s</span>
             </div>
-          )}
-        </div>
-      )}
+            <div className="h-1.5 bg-ink-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-amber-400 to-coral-400 rounded-full transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="text-[11px] font-mono text-paper-500 h-8 overflow-hidden">
+              {fileLogs.slice(-2).map((l, i) => (
+                <div
+                  key={i}
+                  className={`truncate ${l.kind === "err" ? "text-coral-400" : "text-paper-400"}`}
+                >
+                  {l.kind === "err" ? "✕ " : "✓ "}{l.msg}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {status === "done" && (
+          <div className="space-y-3">
+            <div className="flex items-center flex-wrap gap-3">
+              <span className="inline-flex items-center gap-1.5 text-teal-400 font-medium text-sm">
+                <IconCheck size={15} strokeWidth={2.5} /> {done} downloaded
+              </span>
+              {skipped > 0 && (
+                <span className="text-paper-500 text-sm font-mono">· {skipped} skipped</span>
+              )}
+              {errors > 0 && (
+                <span className="inline-flex items-center gap-1 text-coral-400 text-sm font-mono">
+                  · <IconAlert size={12} /> {errors} failed
+                </span>
+              )}
+
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  onClick={() => onOpenFolder(outputDir).catch((err) => toast(err.message, "error"))}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-ink-700 hover:bg-ink-500 text-paper-200 text-sm font-medium transition-colors"
+                >
+                  <IconFolderOpen size={14} /> Open folder
+                </button>
+                {failedItems.length > 0 && onRetryFailed && (
+                  <button
+                    onClick={() => onRetryFailed(failedItems)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-coral-500/20 hover:bg-coral-500/30 border border-coral-500/40 text-coral-300 text-sm font-medium transition-colors"
+                  >
+                    <IconRefresh size={14} /> Retry ({failedItems.length})
+                  </button>
+                )}
+                <button
+                  onClick={onReset}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-ink-900 text-sm font-semibold transition-colors"
+                >
+                  New harvest <IconArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+
+            {failedItems.length > 0 && (
+              <div className="rounded-xl border border-coral-500/30 overflow-hidden">
+                <button
+                  onClick={() => setExpanded((e) => !e)}
+                  className="w-full px-4 py-2 bg-coral-500/10 hover:bg-coral-500/15 text-xs text-coral-300 text-left flex justify-between items-center font-mono"
+                >
+                  <span>{expanded ? "▼" : "▶"} failure details ({failedItems.length})</span>
+                  <span className="text-coral-400/70">
+                    engine: {failedItems[0]?.engine || "http"}
+                  </span>
+                </button>
+                {expanded && (
+                  <div className="max-h-44 overflow-y-auto bg-ink-900 p-3 space-y-1 font-mono text-[11px]">
+                    {failedItems.map((f, i) => (
+                      <div key={i} className="truncate" title={`${f.url} — ${f.error}`}>
+                        <span className="text-paper-600">[{f.engine} ×{f.attempts}]</span>{" "}
+                        <span className="text-coral-400">{f.error}</span>{" "}
+                        <span className="text-paper-500">{f.url.split("/").pop().slice(0, 50)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

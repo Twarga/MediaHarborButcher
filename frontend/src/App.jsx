@@ -7,6 +7,7 @@ import DownloadBar from "./components/DownloadBar";
 import HistoryList from "./components/HistoryList";
 import SettingsForm from "./components/SettingsForm";
 import { toast, ToastHost } from "./toast";
+import { IconAnchor, IconHome, IconHistory, IconSettings, IconAlert } from "./icons";
 
 class ErrorBoundary extends Component {
   state = { error: null };
@@ -15,15 +16,16 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.error) {
       return (
-        <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center p-6">
-          <div className="max-w-lg text-center">
-            <h1 className="text-2xl font-bold text-red-400 mb-3">Something went wrong</h1>
-            <pre className="text-left bg-gray-900 p-3 rounded text-xs text-gray-400 overflow-auto">
+        <div className="min-h-screen flex items-center justify-center p-6">
+          <div className="card max-w-lg p-8 text-center">
+            <IconAlert size={40} className="text-coral-400 mx-auto mb-4" />
+            <h1 className="font-display text-3xl italic text-paper-100 mb-2">Something broke</h1>
+            <pre className="text-left bg-ink-900 p-3 rounded-lg text-xs text-paper-400 overflow-auto font-mono mb-4">
               {String(this.state.error?.stack || this.state.error)}
             </pre>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 px-5 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold"
+              className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-ink-900 font-semibold rounded-lg"
             >
               Reload
             </button>
@@ -38,23 +40,18 @@ class ErrorBoundary extends Component {
 export default function App() {
   const [screen, setScreen] = useState("home");
   const [settings, setSettings] = useState({});
-
-  // Scan state
-  const [scanState, setScanState] = useState("idle"); // idle | scanning | done
+  const [scanState, setScanState] = useState("idle");
   const [logs, setLogs] = useState([]);
   const [counts, setCounts] = useState({ images: 0, videos: 0 });
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(new Set());
   const [mode, setMode] = useState("auto");
   const [currentUrl, setCurrentUrl] = useState("");
-
-  // Download state
   const [dlState, setDlState] = useState({
     status: "idle", done: 0, total: 0, speed: 0, fileLogs: [], outputDir: "",
     errors: 0, skipped: 0, failedItems: [],
   });
 
-  // Hold cleanup callbacks for active SSE/fetch streams so we can cancel them.
   const scanCleanup = useRef(null);
   const downloadCleanup = useRef(null);
 
@@ -66,7 +63,6 @@ export default function App() {
     };
   }, []);
 
-  // Global keyboard: Escape resets when idle of complete work; does nothing mid-download.
   useEffect(() => {
     function onKey(e) {
       if (e.key === "Escape") {
@@ -116,12 +112,11 @@ export default function App() {
     setCounts({ images: 0, videos: 0 });
     setItems([]);
     setSelected(new Set());
-    setDlState({ status: "idle", done: 0, total: 0, speed: 0, fileLogs: [], outputDir: "" });
+    setDlState({ status: "idle", done: 0, total: 0, speed: 0, fileLogs: [], outputDir: "", errors: 0, skipped: 0, failedItems: [] });
 
     const collected = [];
-
     scanCleanup.current = startScan(url, {
-      onStatus: ({ msg }) => setLogs(l => [...l, `🔵 ${msg}`]),
+      onStatus: ({ msg }) => setLogs(l => [...l, { kind: "info", msg }]),
       onFound: (item) => {
         collected.push(item);
         setItems(prev => [...prev, item]);
@@ -130,7 +125,7 @@ export default function App() {
           videos: c.videos + (item.type === "video" ? 1 : 0),
         }));
         const tail = item.url.split("/").pop().slice(0, 50);
-        setLogs(l => [...l, `✅ Found ${item.type}: ${tail}`]);
+        setLogs(l => [...l, { kind: "ok", msg: `${item.type} · ${tail}` }]);
         if (harvestMode === "auto") {
           setSelected(prev => new Set([...prev, item.url]));
         }
@@ -142,13 +137,12 @@ export default function App() {
         if (harvestMode === "auto" && collected.length > 0) {
           triggerDownload(
             collected.map(i => ({ url: i.url, type: i.type, is_stream: i.is_stream })),
-            scan_id,
-            url,
+            scan_id, url,
           );
         }
       },
       onError: () => {
-        setLogs(l => [...l, "🔴 Scan failed"]);
+        setLogs(l => [...l, { kind: "err", msg: "Scan failed" }]);
         setScanState("done");
         scanCleanup.current = null;
         toast("Scan failed — check the URL and try again", "error");
@@ -161,14 +155,10 @@ export default function App() {
     const s = await getSettings();
     const domain = new URL(sourceUrl || urlItems[0].url).hostname;
     const payload = {
-      scan_id: scanId,
-      urls: urlItems,
-      output_dir: s.output_dir,
-      images_subfolder: s.images_subfolder,
-      videos_subfolder: s.videos_subfolder,
+      scan_id: scanId, urls: urlItems, output_dir: s.output_dir,
+      images_subfolder: s.images_subfolder, videos_subfolder: s.videos_subfolder,
       per_site_folder: s.per_site_folder === "true",
-      site_name: domain,
-      source_url: sourceUrl || currentUrl,
+      site_name: domain, source_url: sourceUrl || currentUrl,
     };
 
     setDlState({
@@ -185,26 +175,18 @@ export default function App() {
           fileLogs: [
             ...d.fileLogs.slice(-99),
             error
-              ? `❌ [${engine} ×${attempts}] ${error}`
-              : `✅ ${path?.split("/").pop()}${attempts > 1 ? ` (×${attempts})` : ""}`,
+              ? { kind: "err", msg: `[${engine} ×${attempts}] ${error}` }
+              : { kind: "ok",  msg: `${path?.split("/").pop()}${attempts > 1 ? ` (×${attempts})` : ""}` },
           ],
         })),
       onComplete: ({ downloaded, output_dir, errors, skipped, failed_items }) => {
         setDlState(d => ({
-          ...d,
-          status: "done",
-          done: downloaded,
-          outputDir: output_dir,
-          errors: errors || 0,
-          skipped: skipped || 0,
-          failedItems: failed_items || [],
+          ...d, status: "done", done: downloaded, outputDir: output_dir,
+          errors: errors || 0, skipped: skipped || 0, failedItems: failed_items || [],
         }));
         downloadCleanup.current = null;
-        if (errors > 0) {
-          toast(`${downloaded} downloaded, ${errors} failed`, "warn");
-        } else {
-          toast(`${downloaded} files downloaded`, "success");
-        }
+        if (errors > 0) toast(`${downloaded} downloaded, ${errors} failed`, "warn");
+        else toast(`${downloaded} files downloaded`, "success");
       },
       onError: () => {
         setDlState(d => ({ ...d, status: "done" }));
@@ -221,10 +203,8 @@ export default function App() {
   }
 
   function handleRetryFailed(failedItems) {
-    // Find the original items so we keep their type + is_stream flags.
     const failedUrls = new Set(failedItems.map(f => f.url));
-    const retryItems = items
-      .filter(i => failedUrls.has(i.url))
+    const retryItems = items.filter(i => failedUrls.has(i.url))
       .map(i => ({ url: i.url, type: i.type, is_stream: i.is_stream }));
     if (retryItems.length === 0) return;
     triggerDownload(retryItems, "", currentUrl);
@@ -238,29 +218,66 @@ export default function App() {
     });
   }
 
+  const NAV_ITEMS = [
+    { id: "home", label: "Harvest", icon: IconHome },
+    { id: "history", label: "History", icon: IconHistory },
+    { id: "settings", label: "Settings", icon: IconSettings },
+  ];
+
   return (
     <ErrorBoundary>
       <ToastHost />
-      <div className="min-h-screen bg-gray-950 text-white">
-        <nav className="flex items-center justify-between px-6 py-3 bg-gray-900 border-b border-gray-800">
-          <button onClick={reset} className="text-xl font-bold text-purple-400 hover:text-purple-300">
-            🎣 MediaHarbor
-          </button>
-          <div className="flex gap-2">
-            {["home", "history", "settings"].map(s => (
-              <button
-                key={s}
-                onClick={() => setScreen(s)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${screen === s ? "bg-purple-600 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"}`}
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
+      <div className="min-h-screen text-paper-100">
+        {/* Navbar */}
+        <nav className="sticky top-0 z-40 backdrop-blur-md bg-ink-900/80 border-b border-ink-500">
+          <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+            <button
+              onClick={reset}
+              className="group flex items-center gap-2.5 text-paper-100"
+            >
+              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-coral-500 flex items-center justify-center text-ink-900 shadow-glow-amber">
+                <IconAnchor size={18} strokeWidth={2.5} />
+              </span>
+              <span className="font-display text-xl italic tracking-tight">MediaHarbor</span>
+            </button>
+
+            <div className="flex items-center gap-1">
+              {NAV_ITEMS.map(({ id, label, icon: Ic }) => (
+                <button
+                  key={id}
+                  onClick={() => setScreen(id)}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all
+                    ${screen === id
+                      ? "bg-ink-700 text-paper-100"
+                      : "text-paper-400 hover:text-paper-100 hover:bg-ink-700/50"}`}
+                >
+                  <Ic size={15} />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </nav>
 
+        {/* Screens */}
         {screen === "home" && (
-          <>
+          <main className="max-w-5xl mx-auto px-6">
+            {scanState === "idle" && (
+              <section className="text-center pt-20 pb-8 anim-fade-up">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 text-xs font-medium mb-6">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 scan-dot" />
+                  Powered by yt-dlp · 1800+ sites
+                </div>
+                <h1 className="font-display text-6xl sm:text-7xl leading-[0.95] mb-4">
+                  Paste any link.<br />
+                  <span className="italic grad-text">Harvest everything.</span>
+                </h1>
+                <p className="text-paper-400 text-lg max-w-xl mx-auto">
+                  Point MediaHarbor at any webpage. It opens a real browser, scrolls, and grabs every image and video — even the ones hiding behind lazy loading or CDN walls.
+                </p>
+              </section>
+            )}
+
             <URLBar
               onHarvest={handleHarvest}
               scanning={scanState === "scanning"}
@@ -303,7 +320,7 @@ export default function App() {
                 onRetryFailed={handleRetryFailed}
               />
             )}
-          </>
+          </main>
         )}
 
         {screen === "history" && <HistoryList />}

@@ -1,5 +1,5 @@
-// Tiny toast system — no dependencies. Call `toast('Done')` from anywhere.
 import { useEffect, useState } from "react";
+import { IconCheck, IconX, IconAlert } from "./icons";
 
 let listeners = [];
 let nextId = 0;
@@ -25,26 +25,30 @@ export function ToastHost() {
     };
   }, []);
 
-  const colors = {
-    info: "bg-gray-800 border-gray-600 text-gray-100",
-    success: "bg-green-900/80 border-green-700 text-green-100",
-    error: "bg-red-900/80 border-red-700 text-red-100",
-    warn: "bg-orange-900/80 border-orange-700 text-orange-100",
+  const styles = {
+    info:    { bg: "bg-ink-600", border: "border-ink-400",   text: "text-paper-100", Icon: IconAlert,  accent: "text-paper-300" },
+    success: { bg: "bg-ink-700", border: "border-teal-500/50", text: "text-paper-100", Icon: IconCheck, accent: "text-teal-400"  },
+    error:   { bg: "bg-ink-700", border: "border-coral-500/50",text: "text-paper-100", Icon: IconX,     accent: "text-coral-400" },
+    warn:    { bg: "bg-ink-700", border: "border-amber-400/50",text: "text-paper-100", Icon: IconAlert, accent: "text-amber-300" },
   };
-  const icons = { info: "ℹ", success: "✓", error: "✕", warn: "!" };
 
   return (
     <div className="fixed top-4 right-4 z-[100] space-y-2 pointer-events-none">
-      {toasts.map((t) => (
-        <div
-          key={t.id}
-          className={`flex items-start gap-2 px-4 py-3 rounded-lg border shadow-lg min-w-[240px] max-w-sm backdrop-blur-sm animate-[slideIn_0.2s_ease-out] ${colors[t.type] || colors.info}`}
-          style={{ animation: "slideIn 0.2s ease-out" }}
-        >
-          <span className="font-bold mt-0.5">{icons[t.type] || icons.info}</span>
-          <span className="text-sm flex-1">{t.message}</span>
-        </div>
-      ))}
+      {toasts.map((t) => {
+        const s = styles[t.type] || styles.info;
+        return (
+          <div
+            key={t.id}
+            className={`flex items-start gap-3 px-4 py-3 rounded-xl border ${s.border} ${s.bg} ${s.text} min-w-[260px] max-w-sm shadow-lg backdrop-blur-sm`}
+            style={{ animation: "slideIn 0.2s ease-out" }}
+          >
+            <span className={`${s.accent} mt-0.5 shrink-0`}>
+              <s.Icon size={16} strokeWidth={2.25} />
+            </span>
+            <span className="text-sm flex-1">{t.message}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
