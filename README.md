@@ -4,16 +4,27 @@
 
 ### Paste any link. Harvest everything.
 
-A powerful local web app that extracts and downloads every image and video from any webpage — including JavaScript-heavy sites, infinite scroll galleries, and lazy-loaded content.
+A powerful local web app that extracts and downloads every image and video from any webpage — including JavaScript-heavy sites, infinite scroll galleries, and HLS/DASH video streams.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
-[![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev)
+[![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev)
+[![yt-dlp](https://img.shields.io/badge/yt--dlp-1800+_sites-orange.svg)](https://github.com/yt-dlp/yt-dlp)
 [![GitHub Pages](https://img.shields.io/badge/Landing%20Page-Live-brightgreen)](https://Twarga.github.io/MediaHarborButcher)
 
 [**Landing Page**](https://Twarga.github.io/MediaHarborButcher) · [**Releases**](https://github.com/Twarga/MediaHarborButcher/releases) · [**Report Bug**](https://github.com/Twarga/MediaHarborButcher/issues)
 
 </div>
+
+---
+
+## ✨ What's new in v2.1
+
+- 🎬 **yt-dlp video engine** — 1800+ sites work out of the box: TikTok, Instagram, Twitter, Vimeo, Reddit, Twitch, Dailymotion, and more
+- 🍪 **Cookies forwarded** — Playwright's browser cookies are reused for every download, so CDN-protected media works
+- 🔁 **Retry & recover** — auto-retry with exponential backoff, Content-Type validation, one-click "Retry Failed" button
+- ⌨️ **Keyboard shortcuts** — `Ctrl/Cmd+Enter` to harvest, `Esc` to cancel
+- 🎨 **UI polish** — toast notifications, live scan counters, hover animations, better empty states
 
 ---
 
@@ -190,13 +201,13 @@ kill -9 <PID>
 ## 🗺️ Roadmap
 
 - [x] Phase 0 — Project setup & planning
-- [ ] Phase 1 — Backend rebuild (unified extractor, SSE, video support)
-- [ ] Phase 2 — Frontend rebuild (components, live grid, select mode)
-- [ ] Phase 3 — Integration & testing on 10+ real sites
-- [ ] Phase 4 — Install script & single-command run
-- [ ] Phase 5 — v2.0 release
+- [x] Phase 1 — Backend (unified extractor, SSE, video support, streaming downloads)
+- [x] Phase 2 — Frontend (components, live grid, select mode, error boundary)
+- [x] Phase 3 — Integration hardening (security, CORS lockdown, input validation)
+- [x] Phase 4 — Install script & single-command run
+- [x] Phase 5 — v2.0 release
 
-See [`tasks.md`](tasks.md) for the full detailed task list and [`remake.md`](remake.md) for the complete technical plan.
+See [`remake.md`](remake.md) for the complete technical design.
 
 ---
 

@@ -2,9 +2,10 @@
 set -e
 
 echo ""
-echo "╔══════════════════════════════════════╗"
-echo "║     MediaHarbor v2 — Installer       ║"
-echo "╚══════════════════════════════════════╝"
+echo "╔══════════════════════════════════════════════╗"
+echo "║      MediaHarbor v2.1 — Installer            ║"
+echo "║   yt-dlp video engine • 1800+ sites          ║"
+echo "╚══════════════════════════════════════════════╝"
 echo ""
 
 # Check Python 3.11+
@@ -23,40 +24,44 @@ if ! node -e "assert(parseInt(process.version.slice(1)) >= 18)" 2>/dev/null; the
 fi
 echo "✅ Node $(node --version)"
 
-# Check ffmpeg (optional)
+# Check ffmpeg (optional but recommended for yt-dlp HLS merging)
 if ffmpeg -version &>/dev/null; then
   echo "✅ ffmpeg found"
 else
-  echo "⚠️  ffmpeg not found — HLS/DASH stream download will be disabled."
+  echo "⚠️  ffmpeg not found — HLS/DASH stream download and video merging will be disabled."
   echo "   Install: sudo apt install ffmpeg  (Linux)"
   echo "            brew install ffmpeg      (macOS)"
 fi
 
 echo ""
 echo "📦 Setting up Python environment..."
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r backend/requirements.txt -q
-echo "✅ Python packages installed"
+# Use existing venv if present; otherwise create one.
+if [ ! -d ".venv" ]; then
+  python3 -m venv .venv
+fi
+# Use the venv's pip directly — safer than `source activate` inside a script.
+./.venv/bin/python -m pip install --upgrade pip --quiet
+./.venv/bin/python -m pip install -r backend/requirements.txt --quiet
+echo "✅ Python packages installed (FastAPI, Playwright, yt-dlp, aiohttp...)"
 
 echo ""
-echo "🎭 Installing Playwright browser..."
-playwright install chromium
+echo "🎭 Installing Playwright browser (Chromium)..."
+./.venv/bin/python -m playwright install chromium
 echo "✅ Chromium installed"
 
 echo ""
-echo "⚛️  Building frontend..."
+echo "⚛️  Installing and building frontend..."
 cd frontend
-npm install --silent
+npm install --silent --no-audit --no-fund
 npm run build
 cd ..
 echo "✅ Frontend built"
 
 echo ""
-echo "╔══════════════════════════════════════╗"
-echo "║  ✅ MediaHarbor installed!           ║"
-echo "║                                      ║"
-echo "║  To start:  ./run.sh                 ║"
-echo "║  Then open: http://localhost:8000    ║"
-echo "╚══════════════════════════════════════╝"
+echo "╔══════════════════════════════════════════════╗"
+echo "║  ✅ MediaHarbor installed!                   ║"
+echo "║                                              ║"
+echo "║  To start:  ./run.sh                         ║"
+echo "║  Then open: http://localhost:8000            ║"
+echo "╚══════════════════════════════════════════════╝"
 echo ""

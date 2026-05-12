@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { getSettings, saveSettings } from "../api";
+import { getSettings, saveSettings, clearHistory } from "../api";
+import { toast } from "../toast";
 
 const FORMATS = ["jpg", "png", "webp", "gif", "mp4", "webm"];
 
 export default function SettingsForm() {
   const [s, setS] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => { getSettings().then(setS); }, []);
 
@@ -23,16 +25,25 @@ export default function SettingsForm() {
     e.preventDefault();
     await saveSettings(s);
     setSaved(true);
+    toast("Settings saved", "success");
     setTimeout(() => setSaved(false), 2000);
+  }
+
+  async function handleClearHistory() {
+    if (!confirm("Delete ALL harvest history? This cannot be undone.")) return;
+    setClearing(true);
+    try {
+      await clearHistory();
+      toast("History cleared", "success");
+    } catch (err) {
+      toast(`Failed: ${err.message}`, "error");
+    } finally {
+      setClearing(false);
+    }
   }
 
   const label = "block text-sm text-gray-400 mb-1";
   const input = "w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-purple-500";
-  const toggle = (val) => (
-    <button type="button" onClick={() => set} className={`w-12 h-6 rounded-full transition-colors ${val === "true" ? "bg-purple-600" : "bg-gray-700"}`}>
-      <span className={`block w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${val === "true" ? "translate-x-6" : ""}`} />
-    </button>
-  );
 
   const Toggle = ({ k }) => (
     <button
@@ -46,9 +57,14 @@ export default function SettingsForm() {
 
   const Slider = ({ k, min, max, step = 1, label: lbl }) => (
     <div>
-      <div className="flex justify-between text-sm text-gray-400 mb-1"><span>{lbl}</span><span className="text-white">{s[k]}</span></div>
-      <input type="range" min={min} max={max} step={step} value={s[k]} onChange={e => set(k, e.target.value)}
-        className="w-full accent-purple-600" />
+      <div className="flex justify-between text-sm text-gray-400 mb-1">
+        <span>{lbl}</span><span className="text-white">{s[k]}</span>
+      </div>
+      <input
+        type="range" min={min} max={max} step={step} value={s[k]}
+        onChange={e => set(k, e.target.value)}
+        className="w-full accent-purple-600"
+      />
     </div>
   );
 
@@ -71,8 +87,8 @@ export default function SettingsForm() {
           <div className="flex items-center justify-between"><span className={label + " mb-0"}>Include images</span><Toggle k="include_images" /></div>
           <div className="flex items-center justify-between"><span className={label + " mb-0"}>Include videos</span><Toggle k="include_videos" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={label}>Min image width (px)</label><input type="number" className={input} value={s.min_image_width} onChange={e => set("min_image_width", e.target.value)} /></div>
-            <div><label className={label}>Min image height (px)</label><input type="number" className={input} value={s.min_image_height} onChange={e => set("min_image_height", e.target.value)} /></div>
+            <div><label className={label}>Min image width (px)</label><input type="number" min="0" className={input} value={s.min_image_width} onChange={e => set("min_image_width", e.target.value)} /></div>
+            <div><label className={label}>Min image height (px)</label><input type="number" min="0" className={input} value={s.min_image_height} onChange={e => set("min_image_height", e.target.value)} /></div>
           </div>
           <div>
             <label className={label}>Allowed formats <span className="text-gray-600">(empty = all)</span></label>
@@ -104,6 +120,24 @@ export default function SettingsForm() {
       <button type="submit" className="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold text-white transition-colors">
         {saved ? "Saved ✓" : "Save Settings"}
       </button>
+
+      <section className="border-t border-red-900/40 pt-6">
+        <h2 className="text-lg font-semibold mb-3 text-red-400">Danger Zone</h2>
+        <div className="flex items-center justify-between bg-red-950/20 border border-red-900/40 rounded-lg p-4">
+          <div>
+            <p className="text-sm text-white font-medium">Clear all history</p>
+            <p className="text-xs text-gray-500">Removes every row from the harvests table. Your downloaded files are not affected.</p>
+          </div>
+          <button
+            type="button"
+            disabled={clearing}
+            onClick={handleClearHistory}
+            className="px-4 py-2 bg-red-900/50 hover:bg-red-800 disabled:opacity-50 rounded-lg text-sm font-medium text-red-200"
+          >
+            {clearing ? "Clearing..." : "Clear History"}
+          </button>
+        </div>
+      </section>
     </form>
   );
 }

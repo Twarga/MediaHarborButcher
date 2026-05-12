@@ -60,6 +60,19 @@
       margin-bottom: 2rem;
     }
     .btn-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .badge-new {
+      display: inline-block;
+      background: linear-gradient(90deg, rgba(124, 58, 237, 0.2), rgba(167, 139, 250, 0.2));
+      border: 1px solid var(--purple);
+      color: var(--purple-light);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+    }
     .btn {
       display: inline-block;
       padding: 0.75rem 1.75rem;
@@ -257,10 +270,11 @@
 </nav>
 
 <section class="hero">
+  <span class="badge-new">NEW in v2.1 — yt-dlp video engine • 1800+ sites</span>
   <h1>Paste any link.<br><span>Harvest everything.</span></h1>
-  <p>A local web app that extracts and downloads every image and video from any webpage — including JavaScript-heavy sites, infinite scroll galleries, and lazy-loaded content.</p>
+  <p>A local web app that extracts and downloads every image and video from any webpage — including JavaScript-heavy sites, infinite scroll galleries, HLS/DASH streams, and protected CDNs.</p>
   <div class="btn-row">
-    <a class="btn btn-primary" href="https://github.com/Twarga/MediaHarborButcher/releases">Download v2.0</a>
+    <a class="btn btn-primary" href="https://github.com/Twarga/MediaHarborButcher/releases/latest">Download latest</a>
     <a class="btn btn-secondary" href="https://github.com/Twarga/MediaHarborButcher">View on GitHub</a>
   </div>
 </section>
@@ -297,15 +311,25 @@
 <section class="features">
   <h2>Everything you need</h2>
   <div class="feature-grid">
+    <div class="feature-card" style="border-color: var(--purple);">
+      <div class="feature-icon">🎬</div>
+      <h3>Smart Video Engine</h3>
+      <p>Powered by yt-dlp — automatic fallback on 1800+ sites (TikTok, Instagram, Twitter, Vimeo, Reddit, Twitch…). Reassembles HLS/DASH streams into clean MP4.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🍪</div>
+      <h3>Cookies Forwarded</h3>
+      <p>Playwright cookies + Referer are reused for every download, so CDN-protected media works out of the box.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔁</div>
+      <h3>Retry &amp; Recover</h3>
+      <p>Auto-retry with exponential backoff. Content-Type validation. One-click "Retry Failed" after each batch.</p>
+    </div>
     <div class="feature-card">
       <div class="feature-icon">🌐</div>
       <h3>Any Website</h3>
       <p>Works on JavaScript-heavy sites, infinite scroll, lazy loading, and single-page apps.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎬</div>
-      <h3>Images &amp; Videos</h3>
-      <p>JPG, PNG, WebP, GIF, MP4, WebM, and HLS/DASH streams converted to MP4 via ffmpeg.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">✅</div>

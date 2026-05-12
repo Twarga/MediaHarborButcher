@@ -81,5 +81,9 @@ class Database:
         self.conn.execute("DELETE FROM harvests WHERE id = ?", (id,))
         self.conn.commit()
 
+    def clear_history(self):
+        self.conn.execute("DELETE FROM harvests")
+        self.conn.commit()
+
     def close(self):
         self.conn.close()
