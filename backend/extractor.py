@@ -205,7 +205,85 @@ class Extractor:
             # preserve duplicates, emit in sequence. Skips the normal network/DOM
             # merge + filter pipeline.
             if ordered:
-                await on_status("Ordered mode: loading full album...")
+                await on_status("Ordered mode: looking for embedded album data...")
+
+                # ── Fast path: Imagechest / Inertia-style SPA.
+                # The page ships <div id="app" data-page="{...}"> where the JSON
+                # contains the FULL file list (all positions) under
+                # props.post.files. This is pre-rendered server-side, so we get
+                # every image without clicking "show more" or scrolling, and
+                # related-post thumbnails are in a separate field we ignore.
+                try:
+                    inertia_files = await page.evaluate("""() => {
+                        const app = document.getElementById('app');
+                        if (!app) return null;
+                        const raw = app.getAttribute('data-page');
+                        if (!raw) return null;
+                        try {
+                            const data = JSON.parse(raw);
+                            const post = data && data.props && data.props.post;
+                            const files = post && post.files;
+                            if (!Array.isArray(files) || files.length === 0) return null;
+                            const sorted = [...files].sort(
+                                (a, b) => (a.position || 0) - (b.position || 0)
+                            );
+                            return sorted.map(f => ({
+                                url: f.link,
+                                width: f.width || 0,
+                                height: f.height || 0,
+                                position: f.position,
+                                mime: f.type || '',
+                                is_video: !!f.mp4 || (f.type || '').startsWith('video/'),
+                            }));
+                        } catch (e) { return null; }
+                    }""")
+                except Exception:
+                    inertia_files = None
+
+                if inertia_files:
+                    await on_status(f"Found embedded album JSON · {len(inertia_files)} files")
+                    try:
+                        ctx_out.cookies = await ctx.cookies()
+                    except Exception:
+                        ctx_out.cookies = []
+                    await browser.close()
+
+                    for idx, entry in enumerate(inertia_files):
+                        absurl = entry["url"]
+                        if not absurl or not absurl.startswith("http"):
+                            continue
+                        url_ext = _ext(absurl)
+                        is_video = bool(entry.get("is_video")) or url_ext in VIDEO_EXTS
+                        if is_video:
+                            item_type = "video"
+                            ext = url_ext or ".mp4"
+                        else:
+                            item_type = "image"
+                            # Prefer URL extension; fall back to mime
+                            if url_ext:
+                                ext = url_ext
+                            else:
+                                mime = entry.get("mime", "")
+                                mime_ext = "." + mime.split("/")[-1].replace("jpeg", "jpg") if "/" in mime else ".jpg"
+                                ext = mime_ext if mime_ext in IMAGE_EXTS else ".jpg"
+
+                        item = MediaItem(
+                            url=absurl, type=item_type, ext=ext,
+                            source="imagechest.json", is_stream=False,
+                            width=entry.get("width", 0), height=entry.get("height", 0),
+                        )
+                        item.index = idx
+                        if not inc_images and item.type == "image":
+                            continue
+                        if not inc_videos and item.type == "video":
+                            continue
+                        if allowed and item.ext.lstrip(".") not in allowed:
+                            continue
+                        await on_found(item)
+
+                    return ctx_out
+
+                await on_status("No embedded data — falling back to DOM walk.")
 
                 # 1) Click "show more" / "load more" / "view all" buttons until
                 # nothing matches anymore. Up to 10 rounds. Guarded regex avoids
