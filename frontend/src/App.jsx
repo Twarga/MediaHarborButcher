@@ -133,7 +133,7 @@ export default function App() {
     setScreen("home");
   }
 
-  function handleHarvest(url, harvestMode) {
+  function handleHarvest(url, harvestMode, options = {}) {
     cancelStreams();
     setMode(harvestMode);
     setCurrentUrl(url);
@@ -145,10 +145,12 @@ export default function App() {
     setDlState({ status: "idle", done: 0, total: 0, speed: 0, fileLogs: [], outputDir: "", errors: 0, skipped: 0, failedItems: [] });
 
     const ordered = isOrderedHost(url);
+    const albumOnly = options.albumOnly ?? true;
 
     const collected = [];
     scanCleanup.current = startScan(url, {
       ordered,
+      albumOnly,
       onStatus: ({ msg }) => setLogs(l => [...l, { kind: "info", msg }]),
       onFound: (item) => {
         collected.push(item);

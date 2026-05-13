@@ -39,19 +39,20 @@ export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings })
   const [mode, setMode] = useState("auto");
   const [ordered, setOrdered] = useState(false);
   const [folderPreview, setFolderPreview] = useState("");
+  const [albumOnly, setAlbumOnly] = useState(true);
   const inputRef = useRef(null);
 
   function submit(e) {
     e.preventDefault();
     const url = e.target.url.value.trim();
-    if (url) onHarvest(url, mode);
+    if (url) onHarvest(url, mode, { albumOnly });
   }
 
   function onKeyDown(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
       const url = e.target.value.trim();
-      if (url) onHarvest(url, mode);
+      if (url) onHarvest(url, mode, { albumOnly });
     }
   }
 
@@ -165,6 +166,35 @@ export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings })
           )}
           <span className="ml-auto text-paper-600 font-mono text-[10px]">⌘↵</span>
         </p>
+      )}
+
+      {ordered && (
+        <div className="mt-2 flex items-center gap-2 text-xs">
+          <span className="text-paper-500 font-mono text-[11px]">album mode:</span>
+          <div className="inline-flex rounded-md overflow-hidden border border-ink-400 bg-ink-700 p-0.5">
+            <button
+              type="button"
+              onClick={() => setAlbumOnly(true)}
+              className={`px-2.5 py-1 text-[11px] rounded transition-colors font-medium
+                ${albumOnly ? "bg-amber-400 text-ink-900" : "text-paper-400 hover:text-paper-100"}`}
+            >
+              Album only
+            </button>
+            <button
+              type="button"
+              onClick={() => setAlbumOnly(false)}
+              className={`px-2.5 py-1 text-[11px] rounded transition-colors font-medium
+                ${!albumOnly ? "bg-amber-400 text-ink-900" : "text-paper-400 hover:text-paper-100"}`}
+            >
+              Full page
+            </button>
+          </div>
+          <span className="text-paper-600 text-[11px]">
+            {albumOnly
+              ? "clicks 'show more', ignores sidebar suggestions"
+              : "scans the entire page (includes related posts)"}
+          </span>
+        </div>
       )}
     </form>
   );

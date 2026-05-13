@@ -116,6 +116,7 @@ class Extractor:
         on_found: Callable[[MediaItem], Awaitable[None]],
         on_status: Callable[[str], Awaitable[None]],
         ordered: bool = False,
+        album_only: bool = True,
     ) -> ScanContext:
         stealth = settings.get("stealth_mode", "true") == "true"
         max_scrolls = int(settings.get("max_scrolls", 15))
@@ -204,18 +205,47 @@ class Extractor:
             # preserve duplicates, emit in sequence. Skips the normal network/DOM
             # merge + filter pipeline.
             if ordered:
-                await on_status("Ordered mode: walking gallery in DOM order...")
-                # Light scroll to materialize lazy-loaded thumbnails.
-                for i in range(min(8, max_scrolls)):
+                await on_status("Ordered mode: loading full album...")
+
+                # 1) Click "show more" / "load more" / "view all" buttons until
+                # nothing matches anymore. Up to 10 rounds. Guarded regex avoids
+                # clicking "Learn more" / "Read more" and navigating away.
+                if album_only:
+                    for round_i in range(10):
+                        try:
+                            clicked = await page.evaluate("""() => {
+                                const re = /\\b(show|load|view|see|expand)\\s+(more|all|full|\\d+)/i;
+                                const exact = /^(more)\\s*(\\(\\d+\\))?$/i;
+                                const candidates = [...document.querySelectorAll('button, a, [role="button"], [role="link"]')];
+                                const buttons = candidates.filter(el => {
+                                    if (!el.offsetParent && el.getClientRects().length === 0) return false;
+                                    const t = (el.textContent || '').trim();
+                                    if (!t || t.length > 60) return false;
+                                    return re.test(t) || exact.test(t);
+                                });
+                                buttons.forEach(b => { try { b.click(); } catch {} });
+                                return buttons.length;
+                            }""")
+                        except Exception:
+                            break
+                        if not clicked:
+                            break
+                        await on_status(f"Clicked 'show more' ({round_i + 1})...")
+                        await asyncio.sleep(0.8)
+
+                # 2) Light scroll to materialize anything lazy-loaded after expand.
+                for _ in range(min(8, max_scrolls)):
                     try:
                         await page.evaluate("window.scrollBy(0, window.innerHeight)")
                     except Exception:
                         break
                     await asyncio.sleep(max(0.4, scroll_delay / 2))
 
-                # JS pass: pick best URL per <img> (prefer data-src / srcset largest
-                # / src) and return in document order.
-                ordered_urls: list[dict] = await page.evaluate("""() => {
+                # 3) Scope image extraction to the gallery container so we don't
+                # pull in sidebar / "related posts" thumbnails. Tries imagechest
+                # selectors first, then common gallery containers. Falls back to
+                # <body> only when album_only is OFF.
+                ordered_urls: list[dict] = await page.evaluate("""(albumOnly) => {
                     const pickBest = (img) => {
                         const candidates = [];
                         const srcset = img.getAttribute('srcset');
@@ -233,26 +263,52 @@ class Extractor:
                             if (v) candidates.push({ url: v, w: 0 });
                         }
                         if (candidates.length === 0) return null;
-                        // Prefer the largest srcset candidate, else the first.
                         candidates.sort((a, b) => b.w - a.w);
                         return candidates[0].url;
                     };
+
+                    // Priority list: imagechest-likely containers first, then
+                    // common gallery wrappers, then the generic main content
+                    // areas. A container only counts if it has at least 2 imgs.
+                    const SELECTORS = [
+                        '.post-images', '.images-container', '.post-container .images',
+                        'article .gallery', 'article .images',
+                        'main .gallery', 'main .images',
+                        '[data-testid=\"post-images\"]',
+                        'main[role=\"main\"]', 'main', 'article',
+                        '#content', '.gallery', '.images'
+                    ];
+                    let root = null;
+                    for (const s of SELECTORS) {
+                        for (const el of document.querySelectorAll(s)) {
+                            if (el.querySelectorAll('img').length >= 2) { root = el; break; }
+                        }
+                        if (root) break;
+                    }
+                    if (!root) {
+                        if (albumOnly) {
+                            // Container not found AND user asked for strict mode.
+                            // Return empty so the caller can show a clear message.
+                            return { found_container: false, items: [] };
+                        }
+                        root = document.body;
+                    }
+
                     const out = [];
-                    // Only consider images that are visible and inside the main
-                    // content, to skip navbar/footer/avatar thumbnails.
-                    const root = document.querySelector('main, #content, .gallery, .images, body');
-                    const imgs = (root || document).querySelectorAll('img');
-                    for (const el of imgs) {
+                    for (const el of root.querySelectorAll('img')) {
                         const u = pickBest(el);
                         if (!u) continue;
                         const w = el.naturalWidth || 0;
                         const h = el.naturalHeight || 0;
-                        // Skip obvious UI icons: tiny images with no srcset.
+                        // Skip obvious UI icons (avatars, badges).
                         if (w > 0 && w < 80 && h > 0 && h < 80) continue;
                         out.push({ url: u, w, h });
                     }
-                    return out;
-                }""")
+                    return { found_container: true, items: out };
+                }""", album_only)
+
+                if album_only and not ordered_urls.get("found_container"):
+                    await on_status("No album container found — toggle 'Album only' OFF to scan the whole page.")
 
                 try:
                     ctx_out.cookies = await ctx.cookies()
@@ -260,14 +316,12 @@ class Extractor:
                     ctx_out.cookies = []
                 await browser.close()
 
-                for idx, entry in enumerate(ordered_urls):
+                for idx, entry in enumerate(ordered_urls.get("items", [])):
                     absurl = urljoin(url, entry["url"])
                     if not absurl.startswith("http"):
                         continue
                     item = _make_item(absurl, "ordered", entry.get("w", 0), entry.get("h", 0))
                     if not item or item.type != "image":
-                        # Force classification as image if URL is ambiguous — ordered mode
-                        # is image-gallery oriented and we want all items through.
                         item = MediaItem(
                             url=absurl, type="image", ext=_ext(absurl) or ".jpg",
                             source="ordered", is_stream=False,

@@ -40,9 +40,12 @@ export const openFolder = (path) =>
  * onDone is called with the event payload once the scan completes;
  * onError only fires on transport errors before that point.
  */
-export function startScan(url, { onStatus, onFound, onDone, onError, ordered = false }) {
+export function startScan(url, { onStatus, onFound, onDone, onError, ordered = false, albumOnly = true }) {
   const params = new URLSearchParams({ url });
-  if (ordered) params.set("ordered", "true");
+  if (ordered) {
+    params.set("ordered", "true");
+    params.set("album_only", albumOnly ? "true" : "false");
+  }
   const es = new EventSource(`${BASE}/scan?${params.toString()}`);
   let finished = false;
 
