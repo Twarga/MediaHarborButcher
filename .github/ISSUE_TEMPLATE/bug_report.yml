@@ -1,0 +1,89 @@
+name: 🐛 Bug report
+description: Something broken? Tell us how to reproduce.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. A minimal reproduction is worth 10 paragraphs of description.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences. What happened?
+      placeholder: "When I paste X and click Harvest, Y happens instead of Z."
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: URL that reproduces
+      description: The smallest URL that triggers the bug. Leave blank if not URL-specific.
+      placeholder: "https://example.com/gallery"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Paste the URL above
+        2. Click Harvest in Auto mode
+        3. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "I expected all 47 images to download."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: |
+        Only 7 downloaded. The rest show "ytdlp: HTTP 403" in the failure details.
+    validations:
+      required: true
+
+  - type: textarea
+    id: backend
+    attributes:
+      label: Backend log (if relevant)
+      description: Relevant lines from the terminal running `./run.sh`.
+      render: text
+
+  - type: input
+    id: version
+    attributes:
+      label: MediaHarbor version
+      placeholder: "v2.1.0 (git log -1 --format=%h)"
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other
+
+  - type: input
+    id: runtimes
+    attributes:
+      label: Python / Node / ffmpeg versions
+      placeholder: "Python 3.12.0 · Node 20.10.0 · ffmpeg 6.0"
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues before filing this one
+          required: true

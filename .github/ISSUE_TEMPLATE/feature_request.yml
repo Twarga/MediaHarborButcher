@@ -1,0 +1,44 @@
+name: 💡 Feature request
+description: Suggest an improvement that fits MediaHarbor's scope.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, please check [`CONTRIBUTING.md`](../blob/main/CONTRIBUTING.md#what-fits)
+        for what fits MediaHarbor's scope. Features that require remote servers,
+        accounts, or telemetry are unlikely to be accepted.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What pain point are you trying to solve?
+      placeholder: |
+        "When I harvest X, I lose the gallery ordering because …"
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: A concrete idea. Prefer "small addition that composes with existing behavior" over "new mode".
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else did you try? Why doesn't it work?
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I've read CONTRIBUTING.md and my proposal fits the project scope
+          required: true
+        - label: I searched existing issues and PRs
+          required: true

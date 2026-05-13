@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/Twarga/MediaHarborButcher/blob/main/README.md
+    about: Installation, usage, settings reference.
+  - name: 🔒 Security report
+    url: https://github.com/Twarga/MediaHarborButcher/blob/main/SECURITY.md
+    about: Please do NOT file a public issue for security vulnerabilities.

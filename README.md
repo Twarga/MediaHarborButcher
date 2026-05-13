@@ -1,20 +1,57 @@
 <div align="center">
 
-# 🎣 MediaHarbor
+<a href="https://twarga.github.io/MediaHarborButcher/">
+  <img src="docs/banner.svg" alt="MediaHarbor — Paste any link. Harvest everything." width="100%">
+</a>
 
-### Paste any link. Harvest everything.
+<p>
+  <a href="https://github.com/Twarga/MediaHarborButcher/releases/latest">
+    <img src="https://img.shields.io/github/v/release/Twarga/MediaHarborButcher?include_prereleases&color=ff8a3d&label=release" alt="Latest release">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-ef4852" alt="MIT">
+  </a>
+  <a href="https://github.com/Twarga/MediaHarborButcher/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/Twarga/MediaHarborButcher/ci.yml?branch=main&label=CI&color=14b8a6" alt="CI">
+  </a>
+  <a href="https://twarga.github.io/MediaHarborButcher/">
+    <img src="https://img.shields.io/badge/landing-live-14b8a6" alt="Landing page live">
+  </a>
+  <a href="https://python.org">
+    <img src="https://img.shields.io/badge/python-3.11+-ffcb8a" alt="Python 3.11+">
+  </a>
+  <a href="https://react.dev">
+    <img src="https://img.shields.io/badge/react-19-9a958a" alt="React 19">
+  </a>
+  <a href="https://github.com/yt-dlp/yt-dlp">
+    <img src="https://img.shields.io/badge/yt--dlp-1800+_sites-ff8a3d" alt="yt-dlp 1800+ sites">
+  </a>
+</p>
 
-A powerful local web app that extracts and downloads every image and video from any webpage — including JavaScript-heavy sites, infinite scroll galleries, and HLS/DASH video streams.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
-[![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev)
-[![yt-dlp](https://img.shields.io/badge/yt--dlp-1800+_sites-orange.svg)](https://github.com/yt-dlp/yt-dlp)
-[![GitHub Pages](https://img.shields.io/badge/Landing%20Page-Live-brightgreen)](https://Twarga.github.io/MediaHarborButcher)
-
-[**Landing Page**](https://Twarga.github.io/MediaHarborButcher) · [**Releases**](https://github.com/Twarga/MediaHarborButcher/releases) · [**Report Bug**](https://github.com/Twarga/MediaHarborButcher/issues)
+<p>
+  <a href="https://twarga.github.io/MediaHarborButcher/"><b>Landing</b></a> ·
+  <a href="https://github.com/Twarga/MediaHarborButcher/releases"><b>Releases</b></a> ·
+  <a href="CHANGELOG.md"><b>Changelog</b></a> ·
+  <a href="https://github.com/Twarga/MediaHarborButcher/issues"><b>Issues</b></a> ·
+  <a href="CONTRIBUTING.md"><b>Contributing</b></a>
+</p>
 
 </div>
+
+---
+
+## Table of contents
+
+- [What's new in v2.1](#-whats-new-in-v21)
+- [Features](#-features)
+- [Quick start](#-quick-start)
+- [Usage](#-usage)
+- [Settings](#-settings)
+- [Output structure](#-output-structure)
+- [Architecture](#-architecture)
+- [Troubleshooting](#-troubleshooting)
+- [Roadmap](#-roadmap)
+- [Legal](#-legal)
 
 ---
 
@@ -25,6 +62,8 @@ A powerful local web app that extracts and downloads every image and video from 
 - 🔁 **Retry & recover** — auto-retry with exponential backoff, Content-Type validation, one-click "Retry Failed" button
 - ⌨️ **Keyboard shortcuts** — `Ctrl/Cmd+Enter` to harvest, `Esc` to cancel
 - 🎨 **UI polish** — toast notifications, live scan counters, hover animations, better empty states
+
+See the full [CHANGELOG](CHANGELOG.md).
 
 ---
 
