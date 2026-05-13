@@ -19,9 +19,26 @@ function detectOrdered(val) {
   }
 }
 
+// Mirror of App.jsx deriveSiteName. Kept local so URLBar can render a preview
+// of the per-post folder name in the ordered-mode pill.
+function deriveFolderName(val) {
+  try {
+    const u = new URL(val);
+    const host = u.hostname.toLowerCase().replace(/^www\./, "");
+    if (host === "imgchest.com" || host === "imagechest.com") {
+      const m = u.pathname.match(/\/p\/([^/?#]+)/i);
+      if (m) return `imagechest-${m[1]}`;
+    }
+    return host || "";
+  } catch {
+    return "";
+  }
+}
+
 export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings }) {
   const [mode, setMode] = useState("auto");
   const [ordered, setOrdered] = useState(false);
+  const [folderPreview, setFolderPreview] = useState("");
   const inputRef = useRef(null);
 
   function submit(e) {
@@ -39,14 +56,19 @@ export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings })
   }
 
   function onChange(e) {
-    setOrdered(detectOrdered(e.target.value));
+    const val = e.target.value;
+    const isOrd = detectOrdered(val);
+    setOrdered(isOrd);
+    setFolderPreview(isOrd ? deriveFolderName(val) : "");
   }
 
   function useExample(url) {
     if (inputRef.current) {
       inputRef.current.value = url;
       inputRef.current.focus();
-      setOrdered(detectOrdered(url));
+      const isOrd = detectOrdered(url);
+      setOrdered(isOrd);
+      setFolderPreview(isOrd ? deriveFolderName(url) : "");
     }
   }
 
@@ -138,7 +160,7 @@ export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings })
           {ordered && (
             <span className="ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 font-mono text-[10px] uppercase tracking-wider">
               <span className="w-1 h-1 rounded-full bg-amber-400" />
-              Ordered · files numbered 001, 002 …
+              Ordered · {folderPreview ? <span className="normal-case tracking-normal">{folderPreview}/</span> : "files numbered 001, 002 …"}
             </span>
           )}
           <span className="ml-auto text-paper-600 font-mono text-[10px]">⌘↵</span>

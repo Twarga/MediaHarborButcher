@@ -245,9 +245,17 @@ async def download(req: DownloadRequest):
         except Exception as e:
             await queue.put({"event": "status", "data": json.dumps({"msg": f"Error: {e}"})})
 
-        domain = req.site_name or (
-            urlparse(req.urls[0]["url"]).netloc if req.urls else ""
-        )
+        # 'domain' is what we show in the History list — always the real
+        # hostname. 'site_name' drives only the output folder (which may be
+        # something like 'imagechest-<postId>' to separate per-post harvests).
+        domain = ""
+        try:
+            if req.source_url:
+                domain = urlparse(req.source_url).netloc
+            elif req.urls:
+                domain = urlparse(req.urls[0]["url"]).netloc
+        except Exception:
+            domain = req.site_name or ""
         db().save_harvest(
             url=req.source_url or (req.urls[0]["url"] if req.urls else ""),
             domain=domain,

@@ -22,6 +22,23 @@ function isOrderedHost(url) {
   }
 }
 
+// Derive a per-harvest folder name. For imagechest posts (/p/{id}) we use
+// 'imagechest-{id}' so multiple posts from the same site don't collide in
+// a shared folder. Everything else falls back to the hostname.
+function deriveSiteName(url) {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase().replace(/^www\./, "");
+    if (host === "imgchest.com" || host === "imagechest.com") {
+      const m = u.pathname.match(/\/p\/([^/?#]+)/i);
+      if (m) return `imagechest-${m[1]}`;
+    }
+    return host || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 class ErrorBoundary extends Component {
   state = { error: null };
   static getDerivedStateFromError(error) { return { error }; }
@@ -174,12 +191,12 @@ export default function App() {
   async function triggerDownload(urlItems, scanId = "", sourceUrl = "") {
     if (urlItems.length === 0) return;
     const s = await getSettings();
-    const domain = new URL(sourceUrl || urlItems[0].url).hostname;
+    const siteName = deriveSiteName(sourceUrl || urlItems[0].url);
     const payload = {
       scan_id: scanId, urls: urlItems, output_dir: s.output_dir,
       images_subfolder: s.images_subfolder, videos_subfolder: s.videos_subfolder,
       per_site_folder: s.per_site_folder === "true",
-      site_name: domain, source_url: sourceUrl || currentUrl,
+      site_name: siteName, source_url: sourceUrl || currentUrl,
     };
 
     setDlState({
