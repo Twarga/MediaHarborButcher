@@ -8,8 +8,20 @@ const EXAMPLES = [
   { label: "Pexels",    url: "https://www.pexels.com/videos/" },
 ];
 
+const ORDERED_HOSTS = ["imgchest.com", "imagechest.com"];
+function detectOrdered(val) {
+  if (!val) return false;
+  try {
+    const host = new URL(val).hostname.toLowerCase().replace(/^www\./, "");
+    return ORDERED_HOSTS.some(h => host === h || host.endsWith("." + h));
+  } catch {
+    return false;
+  }
+}
+
 export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings }) {
   const [mode, setMode] = useState("auto");
+  const [ordered, setOrdered] = useState(false);
   const inputRef = useRef(null);
 
   function submit(e) {
@@ -26,10 +38,15 @@ export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings })
     }
   }
 
+  function onChange(e) {
+    setOrdered(detectOrdered(e.target.value));
+  }
+
   function useExample(url) {
     if (inputRef.current) {
       inputRef.current.value = url;
       inputRef.current.focus();
+      setOrdered(detectOrdered(url));
     }
   }
 
@@ -46,6 +63,7 @@ export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings })
             autoFocus
             disabled={scanning}
             onKeyDown={onKeyDown}
+            onChange={onChange}
             placeholder="https://…"
             className="flex-1 bg-transparent py-3.5 text-lg text-paper-100 placeholder-paper-500 focus:outline-none disabled:opacity-50"
           />
@@ -117,6 +135,12 @@ export default function URLBar({ onHarvest, scanning, outputDir, onGoSettings })
             {outputDir}
             <IconArrowRight size={11} />
           </button>
+          {ordered && (
+            <span className="ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 font-mono text-[10px] uppercase tracking-wider">
+              <span className="w-1 h-1 rounded-full bg-amber-400" />
+              Ordered · files numbered 001, 002 …
+            </span>
+          )}
           <span className="ml-auto text-paper-600 font-mono text-[10px]">⌘↵</span>
         </p>
       )}

@@ -162,6 +162,8 @@ class Downloader:
         expected_type: str,
         folder: Path,
         session: aiohttp.ClientSession,
+        index: int = -1,
+        index_width: int = 3,
     ) -> DownloadResult:
         """Download via aiohttp with retry and Content-Type validation."""
         last_err = "unknown"
@@ -215,7 +217,8 @@ class Downloader:
                                 last_err = "Empty response body"
                             else:
                                 digest = md5.hexdigest()
-                                name = f"{digest[:8]}_{self._filename(url, ct)}"
+                                prefix = f"{index:0{index_width}d}_" if index >= 0 else ""
+                                name = f"{prefix}{digest[:8]}_{self._filename(url, ct)}"
                                 final_path = folder / name
                                 if final_path.exists():
                                     tmp_path.unlink(missing_ok=True)
@@ -325,6 +328,8 @@ class Downloader:
         item_type: str,
         is_stream: bool,
         session: aiohttp.ClientSession,
+        index: int = -1,
+        index_width: int = 3,
     ) -> DownloadResult:
         async with self.semaphore:
             folder = self._folder(item_type)
@@ -335,7 +340,7 @@ class Downloader:
                 return await self._ytdlp_download(url, folder)
 
             # Regular HTTP download
-            result = await self._http_download(url, item_type, folder, session)
+            result = await self._http_download(url, item_type, folder, session, index=index, index_width=index_width)
 
             # Videos only: if HTTP failed, fall back to yt-dlp. Images that fail
             # via HTTP aren't going to work with yt-dlp either.
@@ -357,17 +362,24 @@ class Downloader:
 
     async def download_batch(
         self,
-        items: list[dict],  # [{"url", "type", "is_stream"}, ...]
+        items: list[dict],  # [{"url", "type", "is_stream", "index"?}, ...]
         on_progress: Callable[[int, int, DownloadResult], Awaitable[None]] | None = None,
     ) -> list[DownloadResult]:
         total = len(items)
         done = 0
         results = []
 
+        # Width of the zero-pad for ordered filenames: at least 3, more if needed.
+        has_index = any(i.get("index", -1) >= 0 for i in items)
+        index_width = max(3, len(str(total - 1))) if has_index else 3
+
         try:
             async with aiohttp.ClientSession() as session:
                 tasks = [
-                    self.download_one(i["url"], i["type"], i.get("is_stream", False), session)
+                    self.download_one(
+                        i["url"], i["type"], i.get("is_stream", False), session,
+                        index=i.get("index", -1), index_width=index_width,
+                    )
                     for i in items
                 ]
                 for coro in asyncio.as_completed(tasks):

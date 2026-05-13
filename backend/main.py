@@ -87,7 +87,7 @@ def save_settings(data: dict):
 # ── Scan (SSE) ────────────────────────────────────────────────────────────────
 
 @app.get("/scan")
-async def scan(url: str):
+async def scan(url: str, ordered: bool = False):
     if not url.startswith(("http://", "https://")):
         raise HTTPException(400, "URL must start with http:// or https://")
 
@@ -112,12 +112,13 @@ async def scan(url: str):
                 "width": item.width,
                 "height": item.height,
                 "poster": item.poster,
+                "index": item.index,
             }
             _scans[scan_id]["items"].append(d)
             await queue.put({"event": "found", "data": json.dumps(d)})
 
         try:
-            ctx = await Extractor().scan(url, settings, on_found, on_status)
+            ctx = await Extractor().scan(url, settings, on_found, on_status, ordered=ordered)
             _scans[scan_id]["context"] = {
                 "cookies": ctx.cookies,
                 "user_agent": ctx.user_agent,

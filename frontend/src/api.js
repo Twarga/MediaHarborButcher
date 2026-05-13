@@ -40,8 +40,10 @@ export const openFolder = (path) =>
  * onDone is called with the event payload once the scan completes;
  * onError only fires on transport errors before that point.
  */
-export function startScan(url, { onStatus, onFound, onDone, onError }) {
-  const es = new EventSource(`${BASE}/scan?url=${encodeURIComponent(url)}`);
+export function startScan(url, { onStatus, onFound, onDone, onError, ordered = false }) {
+  const params = new URLSearchParams({ url });
+  if (ordered) params.set("ordered", "true");
+  const es = new EventSource(`${BASE}/scan?${params.toString()}`);
   let finished = false;
 
   es.addEventListener("status", (e) => onStatus?.(JSON.parse(e.data)));
@@ -52,8 +54,6 @@ export function startScan(url, { onStatus, onFound, onDone, onError }) {
     es.close();
   });
   es.onerror = (err) => {
-    // EventSource always fires 'error' on close, even after 'done' — ignore
-    // errors that happen after a successful completion.
     if (finished) return;
     onError?.(err);
     es.close();

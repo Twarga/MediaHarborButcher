@@ -9,6 +9,19 @@ import SettingsForm from "./components/SettingsForm";
 import { toast, ToastHost } from "./toast";
 import { IconAnchor, IconHome, IconHistory, IconSettings, IconAlert } from "./icons";
 
+// Hosts that trigger ordered (sequential) harvesting — private to this user.
+// Imagechest galleries (WhatsApp story screenshots, etc.) must keep their
+// original order, so we number filenames 001_, 002_, …
+const ORDERED_HOSTS = ["imgchest.com", "imagechest.com"];
+function isOrderedHost(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+    return ORDERED_HOSTS.some(h => host === h || host.endsWith("." + h));
+  } catch {
+    return false;
+  }
+}
+
 class ErrorBoundary extends Component {
   state = { error: null };
   static getDerivedStateFromError(error) { return { error }; }
@@ -114,8 +127,11 @@ export default function App() {
     setSelected(new Set());
     setDlState({ status: "idle", done: 0, total: 0, speed: 0, fileLogs: [], outputDir: "", errors: 0, skipped: 0, failedItems: [] });
 
+    const ordered = isOrderedHost(url);
+
     const collected = [];
     scanCleanup.current = startScan(url, {
+      ordered,
       onStatus: ({ msg }) => setLogs(l => [...l, { kind: "info", msg }]),
       onFound: (item) => {
         collected.push(item);
@@ -125,7 +141,8 @@ export default function App() {
           videos: c.videos + (item.type === "video" ? 1 : 0),
         }));
         const tail = item.url.split("/").pop().slice(0, 50);
-        setLogs(l => [...l, { kind: "ok", msg: `${item.type} · ${tail}` }]);
+        const prefix = item.index >= 0 ? `#${String(item.index + 1).padStart(3, "0")} ` : "";
+        setLogs(l => [...l, { kind: "ok", msg: `${prefix}${item.type} · ${tail}` }]);
         if (harvestMode === "auto") {
           setSelected(prev => new Set([...prev, item.url]));
         }
@@ -133,10 +150,14 @@ export default function App() {
       onDone: ({ scan_id, total_images, total_videos }) => {
         setScanState("done");
         scanCleanup.current = null;
-        toast(`Found ${total_images} images and ${total_videos} videos`, "success");
+        if (ordered) {
+          toast(`Ordered scan found ${total_images} images`, "success");
+        } else {
+          toast(`Found ${total_images} images and ${total_videos} videos`, "success");
+        }
         if (harvestMode === "auto" && collected.length > 0) {
           triggerDownload(
-            collected.map(i => ({ url: i.url, type: i.type, is_stream: i.is_stream })),
+            collected.map(i => ({ url: i.url, type: i.type, is_stream: i.is_stream, index: i.index ?? -1 })),
             scan_id, url,
           );
         }
@@ -198,14 +219,14 @@ export default function App() {
   function handleDownloadSelected() {
     const urlItems = items
       .filter(i => selected.has(i.url))
-      .map(i => ({ url: i.url, type: i.type, is_stream: i.is_stream }));
+      .map(i => ({ url: i.url, type: i.type, is_stream: i.is_stream, index: i.index ?? -1 }));
     triggerDownload(urlItems, "", currentUrl);
   }
 
   function handleRetryFailed(failedItems) {
     const failedUrls = new Set(failedItems.map(f => f.url));
     const retryItems = items.filter(i => failedUrls.has(i.url))
-      .map(i => ({ url: i.url, type: i.type, is_stream: i.is_stream }));
+      .map(i => ({ url: i.url, type: i.type, is_stream: i.is_stream, index: i.index ?? -1 }));
     if (retryItems.length === 0) return;
     triggerDownload(retryItems, "", currentUrl);
   }

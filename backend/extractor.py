@@ -32,6 +32,7 @@ class MediaItem:
     width: int = 0
     height: int = 0
     poster: str = ""
+    index: int = -1  # position in source page when ordered mode is on; -1 means unordered
 
 
 @dataclass
@@ -114,6 +115,7 @@ class Extractor:
         settings: dict,
         on_found: Callable[[MediaItem], Awaitable[None]],
         on_status: Callable[[str], Awaitable[None]],
+        ordered: bool = False,
     ) -> ScanContext:
         stealth = settings.get("stealth_mode", "true") == "true"
         max_scrolls = int(settings.get("max_scrolls", 15))
@@ -197,6 +199,86 @@ class Extractor:
                 await page.goto(url, wait_until="domcontentloaded", timeout=25000)
             except Exception as e:
                 await on_status(f"Navigation warning: {e}")
+
+            # ── Ordered mode (Imagechest etc.): walk gallery images in DOM order,
+            # preserve duplicates, emit in sequence. Skips the normal network/DOM
+            # merge + filter pipeline.
+            if ordered:
+                await on_status("Ordered mode: walking gallery in DOM order...")
+                # Light scroll to materialize lazy-loaded thumbnails.
+                for i in range(min(8, max_scrolls)):
+                    try:
+                        await page.evaluate("window.scrollBy(0, window.innerHeight)")
+                    except Exception:
+                        break
+                    await asyncio.sleep(max(0.4, scroll_delay / 2))
+
+                # JS pass: pick best URL per <img> (prefer data-src / srcset largest
+                # / src) and return in document order.
+                ordered_urls: list[dict] = await page.evaluate("""() => {
+                    const pickBest = (img) => {
+                        const candidates = [];
+                        const srcset = img.getAttribute('srcset');
+                        if (srcset) {
+                            for (const part of srcset.split(',')) {
+                                const bits = part.trim().split(/\\s+/);
+                                if (bits[0]) {
+                                    const w = bits[1] ? parseInt(bits[1]) : 0;
+                                    candidates.push({ url: bits[0], w });
+                                }
+                            }
+                        }
+                        for (const attr of ['data-src', 'data-original', 'data-lazy', 'src']) {
+                            const v = img.getAttribute(attr);
+                            if (v) candidates.push({ url: v, w: 0 });
+                        }
+                        if (candidates.length === 0) return null;
+                        // Prefer the largest srcset candidate, else the first.
+                        candidates.sort((a, b) => b.w - a.w);
+                        return candidates[0].url;
+                    };
+                    const out = [];
+                    // Only consider images that are visible and inside the main
+                    // content, to skip navbar/footer/avatar thumbnails.
+                    const root = document.querySelector('main, #content, .gallery, .images, body');
+                    const imgs = (root || document).querySelectorAll('img');
+                    for (const el of imgs) {
+                        const u = pickBest(el);
+                        if (!u) continue;
+                        const w = el.naturalWidth || 0;
+                        const h = el.naturalHeight || 0;
+                        // Skip obvious UI icons: tiny images with no srcset.
+                        if (w > 0 && w < 80 && h > 0 && h < 80) continue;
+                        out.push({ url: u, w, h });
+                    }
+                    return out;
+                }""")
+
+                try:
+                    ctx_out.cookies = await ctx.cookies()
+                except Exception:
+                    ctx_out.cookies = []
+                await browser.close()
+
+                for idx, entry in enumerate(ordered_urls):
+                    absurl = urljoin(url, entry["url"])
+                    if not absurl.startswith("http"):
+                        continue
+                    item = _make_item(absurl, "ordered", entry.get("w", 0), entry.get("h", 0))
+                    if not item or item.type != "image":
+                        # Force classification as image if URL is ambiguous — ordered mode
+                        # is image-gallery oriented and we want all items through.
+                        item = MediaItem(
+                            url=absurl, type="image", ext=_ext(absurl) or ".jpg",
+                            source="ordered", is_stream=False,
+                            width=entry.get("w", 0), height=entry.get("h", 0),
+                        )
+                    item.index = idx
+                    if allowed and item.ext.lstrip(".") not in allowed:
+                        continue
+                    await on_found(item)
+
+                return ctx_out
 
             # Auto-scroll
             last_h = 0
